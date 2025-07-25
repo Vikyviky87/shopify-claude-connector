@@ -1,3 +1,4 @@
+// ===== FILE 1: server.js =====
 const express = require('express');
 const axios = require('axios');
 const crypto = require('crypto');
@@ -11,10 +12,10 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // Configurazione Shopify
-const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY;
-const SHOPIFY_API_SECRET = process.env.SHOPIFY_API_SECRET;
+const SHOPIFY_API_KEY = '39aeb902f7ee870b42d3621446a9ec69';
+const SHOPIFY_API_SECRET = 'f696ae75667258dad4bbca8ef7194b1a';
 const SHOPIFY_SCOPES = 'read_products,read_orders,read_customers,read_inventory,read_analytics';
-const APP_URL = process.env.APP_URL || 'https://claude-shopify-connector.vercel.app';
+const APP_URL = 'https://shopify-claude-connector-viky.vercel.app';
 
 // Funzione per fare richieste autenticate a Shopify
 async function shopifyRequest(shop, accessToken, endpoint) {
@@ -516,3 +517,55 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
+
+// ===== FILE 2: package.json =====
+{
+  "name": "shopify-claude-connector",
+  "version": "1.0.0",
+  "description": "App per collegare Shopify a Claude AI",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "crypto": "^1.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+
+// ===== FILE 3: .env =====
+SHOPIFY_API_KEY=39aeb902f7ee870b42d3621446a9ec69
+SHOPIFY_API_SECRET=f696ae75667258dad4bbca8ef7194b1a
+APP_URL=https://claude-shopify-connector.vercel.app
+PORT=3000
+
+// ===== FILE 4: vercel.json =====
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/server.js"
+    }
+  ],
+  "env": {
+    "SHOPIFY_API_KEY": "@shopify_api_key",
+    "SHOPIFY_API_SECRET": "@shopify_api_secret",
+    "APP_URL": "@app_url"
+  }
+}
