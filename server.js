@@ -8,10 +8,11 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static('public'));
 
-const SHOPIFY_API_KEY = '39aeb902f7ee870b42d3621446a9ec69';
-const SHOPIFY_API_SECRET = 'f696ae75667258dad4bbca8ef7194b1a';
+// Variabili ambiente (NON hardcoded)
+const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY;
+const SHOPIFY_API_SECRET = process.env.SHOPIFY_API_SECRET;
 const SHOPIFY_SCOPES = 'read_products,read_orders,read_customers,read_inventory,read_analytics';
-const APP_URL = 'https://shopify-claude-connector-viky.vercel.app';
+const APP_URL = process.env.APP_URL;
 
 async function shopifyRequest(shop, accessToken, endpoint) {
   try {
