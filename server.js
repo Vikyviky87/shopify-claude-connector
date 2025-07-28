@@ -2,7 +2,6 @@
 const express = require('express');
 const axios = require('axios');
 const crypto = require('crypto');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static('public'));
 
-// Configurazione Shopify
+// Configurazione Shopify - CREDENZIALI HARDCODED
 const SHOPIFY_API_KEY = '39aeb902f7ee870b42d3621446a9ec69';
 const SHOPIFY_API_SECRET = 'f696ae75667258dad4bbca8ef7194b1a';
 const SHOPIFY_SCOPES = 'read_products,read_orders,read_customers,read_inventory,read_analytics';
@@ -542,11 +541,9 @@ module.exports = app;
   }
 }
 
-// ===== FILE 3: .env =====
-SHOPIFY_API_KEY=39aeb902f7ee870b42d3621446a9ec69
-SHOPIFY_API_SECRET=f696ae75667258dad4bbca8ef7194b1a
-APP_URL=https://claude-shopify-connector.vercel.app
-PORT=3000
+// ===== FILE 3: .env ===== 
+// QUESTO FILE NON È PIÙ NECESSARIO - CANCELLALO DA GITHUB
+// Le credenziali sono ora hardcoded nel server.js
 
 // ===== FILE 4: vercel.json =====
 {
