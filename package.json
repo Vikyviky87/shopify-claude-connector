@@ -1,10 +1,11 @@
 {
-  "name": "shopify-claude-connector",
-  "version": "1.0.3",
-  "description": "App per collegare Shopify a Claude AI",
+  "name": "viky-store-analytics",
+  "version": "2.0.0",
+  "description": "Piattaforma professionale di analytics per Viky Store con integrazione Claude AI",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -12,5 +13,14 @@
   },
   "engines": {
     "node": "22.x"
-  }
+  },
+  "keywords": [
+    "shopify",
+    "claude-ai",
+    "analytics",
+    "e-commerce",
+    "viky-store"
+  ],
+  "author": "Viky Store",
+  "license": "MIT"
 }
