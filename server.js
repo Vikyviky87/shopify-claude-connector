@@ -426,6 +426,43 @@ app.get('/dashboard', async (req, res) => {
               <p>Per accedere alla dashboard completa è necessario un token di accesso valido.</p>
             </div>
             <a href="/" class="button">🏠 Torna alla Home</a>
+            <a href="/auth?shop=${shop}" class="button">🔐 Reinstalla App</a>
+          </body>
+        </html>
+      `);
+    }
+
+  } catch (error) {
+    res.status(500).send('Errore generale dashboard: ' + error.message);
+  }
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    app: 'Shopify Claude Connector',
+    version: '2.0.0',
+    shop_connected: DEFAULT_SHOP,
+    endpoints: [
+      '/data/products',
+      '/data/orders', 
+      '/data/customers',
+      '/export/claude',
+      '/dashboard'
+    ]
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Shopify Claude Connector v2.0 avviato sulla porta ${PORT}`);
+  console.log(`📱 Homepage: ${APP_URL}`);
+  console.log(`📊 Dashboard: ${APP_URL}/dashboard?shop=${DEFAULT_SHOP}&token=${DEFAULT_TOKEN}`);
+  console.log(`🤖 Export Claude: ${APP_URL}/export/claude?shop=${DEFAULT_SHOP}&token=${DEFAULT_TOKEN}`);
+});
+
+module.exports = app; Home</a>
             <a href="/auth?shop=${shop}" class="button">🔐 Autorizza App</a>
           </body>
         </html>
