@@ -1,6 +1,6 @@
 {
   "name": "shopify-claude-connector",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "App per collegare Shopify a Claude AI",
   "main": "server.js",
   "scripts": {
@@ -11,6 +11,6 @@
     "axios": "^1.6.0"
   },
   "engines": {
-    "node": "18.x"
+    "node": "22.x"
   }
 }
