@@ -568,13 +568,15 @@ app.get('/claude', async (req, res) => {
 // Dashboard
 app.get('/dashboard', async (req, res) => {
   try {
-    const [products, orders, customers] = await Promise.all([
+    const [productsData, ordersData, customersData] = await Promise.all([
       shopifyAPI('products.json'),
-      shopifyAPI('orders.json?status=any&limit=20'),
-      shopifyAPI('customers.json?limit=20')
+      shopifyAPI('orders.json?status=any&limit=250'),
+      shopifyAPI('customers.json?limit=250')
     ]);
 
-    const totalRevenue = orders.orders.reduce((sum, o) => sum + parseFloat(o.total_price || 0), 0);
+    const products = productsData.products;
+    const orders = ordersData.orders;
+    const customers = customersData.customers;
 
     res.json({
       success: true,
