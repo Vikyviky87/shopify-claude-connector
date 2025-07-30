@@ -566,6 +566,8 @@ app.get('/claude', async (req, res) => {
 });
 
 // Dashboard
+// Sostituisci la route /dashboard nel tuo server.js con questa versione avanzata
+
 app.get('/dashboard', async (req, res) => {
   try {
     const [productsData, ordersData, customersData] = await Promise.all([
@@ -578,18 +580,624 @@ app.get('/dashboard', async (req, res) => {
     const orders = ordersData.orders;
     const customers = customersData.customers;
 
-    res.json({
-      success: true,
-      stats: {
-        products: products.products.length,
-        orders: orders.orders.length,
-        customers: customers.customers.length,
-        revenue: totalRevenue.toFixed(2)
-      },
-      recent_orders: orders.orders.slice(0, 5)
-    });
+    // CALCOLI STATISTICHE AVANZATE
+    const now = new Date();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+    const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // Statistiche Generali
+    const totalRevenue = orders.reduce((sum, order) => sum + parseFloat(order.total_price || 0), 0);
+    const avgOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
+    
+    // Ordini per periodo
+    const ordersThisMonth = orders.filter(o => new Date(o.created_at) > lastMonth);
+    const ordersThisWeek = orders.filter(o => new Date(o.created_at) > lastWeek);
+    const revenueThisMonth = ordersThisMonth.reduce((sum, o) => sum + parseFloat(o.total_price || 0), 0);
+    
+    // Statistiche Prodotti
+    const activeProducts = products.filter(p => p.status === 'active').length;
+    const outOfStock = products.filter(p => p.variants.some(v => v.inventory_quantity === 0)).length;
+    const lowStock = products.filter(p => p.variants.some(v => v.inventory_quantity > 0 && v.inventory_quantity <= 5)).length;
+    
+    // Top Prodotti per vendite (simulato basato su inventory)
+    const topProducts = products
+      .filter(p => p.status === 'active')
+      .sort((a, b) => (b.variants[0]?.inventory_quantity || 0) - (a.variants[0]?.inventory_quantity || 0))
+      .slice(0, 5);
+
+    // Clienti Statistiche
+    const topCustomers = customers
+      .sort((a, b) => parseFloat(b.total_spent) - parseFloat(a.total_spent))
+      .slice(0, 5);
+    
+    const averageCustomerValue = customers.reduce((sum, c) => sum + parseFloat(c.total_spent || 0), 0) / customers.length;
+
+    // Ordini per stato
+    const ordersByStatus = {
+      paid: orders.filter(o => o.financial_status === 'paid').length,
+      pending: orders.filter(o => o.financial_status === 'pending').length,
+      refunded: orders.filter(o => o.financial_status === 'refunded').length,
+      cancelled: orders.filter(o => o.financial_status === 'cancelled').length
+    };
+
+    // Trend ultimi 7 giorni (simulato)
+    const dailyData = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const dayOrders = orders.filter(o => {
+        const orderDate = new Date(o.created_at);
+        return orderDate.toDateString() === date.toDateString();
+      });
+      
+      dailyData.push({
+        date: date.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric' }),
+        orders: dayOrders.length,
+        revenue: dayOrders.reduce((sum, o) => sum + parseFloat(o.total_price || 0), 0)
+      });
+    }
+
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="it">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dashboard Analytics - Viky Store</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+          }
+          
+          .header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+          }
+          
+          .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+          }
+          
+          .header h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+          }
+          
+          .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+          }
+          
+          .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+          }
+          
+          .main-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin: -40px 20px 40px;
+            position: relative;
+            z-index: 2;
+          }
+          
+          .stat-card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.8);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+          }
+          
+          .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--accent-color);
+          }
+          
+          .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+          }
+          
+          .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            opacity: 0.8;
+          }
+          
+          .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--accent-color);
+          }
+          
+          .stat-label {
+            color: #64748b;
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+          }
+          
+          .stat-change {
+            font-size: 0.85rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+          }
+          
+          .stat-change.positive {
+            background: #dcfce7;
+            color: #166534;
+          }
+          
+          .stat-change.negative {
+            background: #fee2e2;
+            color: #991b1b;
+          }
+          
+          /* Colori per le card */
+          .stat-card:nth-child(1) { --accent-color: #10b981; }
+          .stat-card:nth-child(2) { --accent-color: #3b82f6; }
+          .stat-card:nth-child(3) { --accent-color: #8b5cf6; }
+          .stat-card:nth-child(4) { --accent-color: #f59e0b; }
+          .stat-card:nth-child(5) { --accent-color: #ef4444; }
+          .stat-card:nth-child(6) { --accent-color: #06b6d4; }
+          
+          .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+          }
+          
+          .section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+          }
+          
+          .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #1e293b;
+          }
+          
+          .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+          }
+          
+          .top-items {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+          }
+          
+          .top-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 12px;
+            transition: background 0.3s ease;
+          }
+          
+          .top-item:hover {
+            background: #f1f5f9;
+          }
+          
+          .item-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            margin-right: 15px;
+          }
+          
+          .item-info {
+            flex: 1;
+          }
+          
+          .item-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          
+          .item-details {
+            font-size: 0.85rem;
+            color: #64748b;
+          }
+          
+          .item-value {
+            font-weight: 600;
+            color: #059669;
+            font-size: 0.95rem;
+          }
+          
+          .bottom-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+          }
+          
+          .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+          }
+          
+          .status-item {
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            text-align: center;
+          }
+          
+          .status-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+          }
+          
+          .status-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 500;
+          }
+          
+          .status-paid { color: #10b981; }
+          .status-pending { color: #f59e0b; }
+          .status-refunded { color: #ef4444; }
+          .status-cancelled { color: #6b7280; }
+          
+          .nav-buttons {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+          }
+          
+          .nav-button {
+            padding: 12px 24px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+          
+          .nav-button:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+          }
+          
+          .nav-button.secondary {
+            background: #6b7280;
+          }
+          
+          .nav-button.claude {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+          }
+          
+          @media (max-width: 1024px) {
+            .content-grid { grid-template-columns: 1fr; }
+            .main-stats { grid-template-columns: repeat(2, 1fr); }
+          }
+          
+          @media (max-width: 768px) {
+            .main-stats { grid-template-columns: 1fr; }
+            .nav-buttons { flex-direction: column; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="container">
+            <h1>📊 Dashboard Analytics</h1>
+            <p>Panoramica completa delle performance Viky Store</p>
+          </div>
+        </div>
+        
+        <div class="container">
+          <div class="main-stats">
+            <div class="stat-card">
+              <div class="stat-icon">💰</div>
+              <div class="stat-number">€${totalRevenue.toFixed(2)}</div>
+              <div class="stat-label">Fatturato Totale</div>
+              <div class="stat-change positive">+€${revenueThisMonth.toFixed(2)} questo mese</div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">🛒</div>
+              <div class="stat-number">${orders.length}</div>
+              <div class="stat-label">Ordini Totali</div>
+              <div class="stat-change positive">+${ordersThisMonth.length} questo mese</div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">👥</div>
+              <div class="stat-number">${customers.length}</div>
+              <div class="stat-label">Clienti Registrati</div>
+              <div class="stat-change positive">Base clienti in crescita</div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">📈</div>
+              <div class="stat-number">€${avgOrderValue.toFixed(2)}</div>
+              <div class="stat-label">Valore Medio Ordine</div>
+              <div class="stat-change positive">Performance stabile</div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">📦</div>
+              <div class="stat-number">${activeProducts}</div>
+              <div class="stat-label">Prodotti Attivi</div>
+              <div class="stat-change ${lowStock > 0 ? 'negative' : 'positive'}">${lowStock} scorte basse</div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">⭐</div>
+              <div class="stat-number">€${averageCustomerValue.toFixed(2)}</div>
+              <div class="stat-label">Valore Cliente Medio</div>
+              <div class="stat-change positive">LTV in crescita</div>
+            </div>
+          </div>
+          
+          <div class="nav-buttons">
+            <a href="/" class="nav-button secondary">🏠 Home</a>
+            <a href="/products" class="nav-button">📦 Prodotti</a>
+            <a href="/orders" class="nav-button">🛒 Ordini</a>
+            <a href="/customers" class="nav-button">👥 Clienti</a>
+            <a href="/claude" class="nav-button claude">🤖 Analisi AI</a>
+          </div>
+        </div>
+        
+        <div class="container">
+          <div class="content-grid">
+            <div class="section">
+              <h2 class="section-title">📈 Trend Vendite (Ultimi 7 giorni)</h2>
+              <div class="chart-container">
+                <canvas id="salesChart"></canvas>
+              </div>
+            </div>
+            
+            <div class="section">
+              <h2 class="section-title">🏆 Top Prodotti</h2>
+              <div class="top-items">
+                ${topProducts.map((product, index) => `
+                  <div class="top-item">
+                    <div class="item-avatar">${index + 1}</div>
+                    <div class="item-info">
+                      <div class="item-name">${product.title}</div>
+                      <div class="item-details">${product.variants[0]?.inventory_quantity || 0} disponibili</div>
+                    </div>
+                    <div class="item-value">€${product.variants[0]?.price || 0}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+          
+          <div class="bottom-grid">
+            <div class="section">
+              <h2 class="section-title">💳 Stati Ordini</h2>
+              <div class="status-grid">
+                <div class="status-item">
+                  <div class="status-number status-paid">${ordersByStatus.paid}</div>
+                  <div class="status-label">Pagati</div>
+                </div>
+                <div class="status-item">
+                  <div class="status-number status-pending">${ordersByStatus.pending}</div>
+                  <div class="status-label">In Sospeso</div>
+                </div>
+                <div class="status-item">
+                  <div class="status-number status-refunded">${ordersByStatus.refunded}</div>
+                  <div class="status-label">Rimborsati</div>
+                </div>
+                <div class="status-item">
+                  <div class="status-number status-cancelled">${ordersByStatus.cancelled}</div>
+                  <div class="status-label">Cancellati</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="section">
+              <h2 class="section-title">⭐ Top Clienti</h2>
+              <div class="top-items">
+                ${topCustomers.slice(0, 4).map((customer, index) => `
+                  <div class="top-item">
+                    <div class="item-avatar">${customer.first_name?.charAt(0) || 'C'}</div>
+                    <div class="item-info">
+                      <div class="item-name">${customer.first_name} ${customer.last_name}</div>
+                      <div class="item-details">${customer.orders_count} ordini</div>
+                    </div>
+                    <div class="item-value">€${customer.total_spent}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            
+            <div class="section">
+              <h2 class="section-title">📊 Metriche Inventario</h2>
+              <div class="status-grid">
+                <div class="status-item">
+                  <div class="status-number status-paid">${activeProducts}</div>
+                  <div class="status-label">Prodotti Attivi</div>
+                </div>
+                <div class="status-item">
+                  <div class="status-number status-pending">${lowStock}</div>
+                  <div class="status-label">Scorte Basse</div>
+                </div>
+                <div class="status-item">
+                  <div class="status-number status-refunded">${outOfStock}</div>
+                  <div class="status-label">Esauriti</div>
+                </div>
+                <div class="status-item">
+                  <div class="status-number status-cancelled">${products.filter(p => p.status === 'draft').length}</div>
+                  <div class="status-label">Bozze</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <script>
+          // Configura grafico vendite
+          const ctx = document.getElementById('salesChart').getContext('2d');
+          const dailyData = ${JSON.stringify(dailyData)};
+          
+          new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: dailyData.map(d => d.date),
+              datasets: [{
+                label: 'Fatturato (€)',
+                data: dailyData.map(d => d.revenue),
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#3b82f6',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 6
+              }, {
+                label: 'Ordini',
+                data: dailyData.map(d => d.orders),
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 3,
+                fill: false,
+                tension: 0.4,
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 6,
+                yAxisID: 'y1'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  position: 'top',
+                  labels: {
+                    usePointStyle: true,
+                    font: {
+                      weight: 'bold'
+                    }
+                  }
+                }
+              },
+              scales: {
+                y: {
+                  type: 'linear',
+                  display: true,
+                  position: 'left',
+                  title: {
+                    display: true,
+                    text: 'Fatturato (€)',
+                    font: {
+                      weight: 'bold'
+                    }
+                  },
+                  grid: {
+                    color: 'rgba(0,0,0,0.1)'
+                  }
+                },
+                y1: {
+                  type: 'linear',
+                  display: true,
+                  position: 'right',
+                  title: {
+                    display: true,
+                    text: 'Numero Ordini',
+                    font: {
+                      weight: 'bold'
+                    }
+                  },
+                  grid: {
+                    drawOnChartArea: false,
+                  },
+                },
+                x: {
+                  grid: {
+                    color: 'rgba(0,0,0,0.1)'
+                  }
+                }
+              },
+              interaction: {
+                intersect: false,
+                mode: 'index'
+              }
+            }
+          });
+        </script>
+      </body>
+      </html>
+    `);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).send(`
+      <div style="padding: 50px; text-align: center; font-family: Arial, sans-serif;">
+        <h2>❌ Errore nel caricamento dashboard</h2>
+        <p>${error.message}</p>
+        <a href="/" style="color: #3b82f6;">← Torna alla Home</a>
+      </div>
+    `);
   }
 });
 
